@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.1
+Type=Application
+Name=Guideos Wallpaper-Manager
+Comment=Wallpaper-Manager für GuideOS.de
+Exec=python3 /bin/guideos-wallpaper-manager.py
+Icon=/usr/share/pixmaps/guideos-wallpaper-manager.png
+Terminal=false
+Categories=GuideOS;
+StartupNotify=true
+Name[de_DE]=Guideos Wallpaper-Manager
+
