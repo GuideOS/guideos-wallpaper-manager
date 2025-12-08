@@ -4,17 +4,13 @@
 ############################################################################################
 GuideOS Wallpaper-Manager
 --------------------------------
-Ein plattformübergreifender Wallpaper-Manager mit:
-- asynchronem Thumbnail-Loading
-- lokalem Cache (ETag / Last-Modified)
-- parallelen, abbrechbaren Downloads
 - plattformabhängigem Setzen des Desktops (Cinnamon/GNOME, feh, Windows, macOS)
 - Hell/Dunkel-Theme für Dialoge
 
-Autor: evilware666
+Autor: evilware666 & Helga
 Lizenz: MIT
-Datum: 2025-11-06
-Version 1.0
+Datum: 2025-11-08
+Version 1.1
 """
 ###############################################################################################
 
