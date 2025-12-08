@@ -1,12 +1,8 @@
 # GuideOS Wallpaper-Manager
 
-Grafisches Python-Tool zum Anzeigen, Verwalten und Einreichen von
-Wallpapers für GuideOS.
+Grafisches Python-Tool zum Anzeigen, speichern und als Hintergrund setzen von Wallpaper
 
-Der Wallpaper-Manager lädt Bilder von guideos.de, unterstützt lokale
-Wallpapers (Datei oder Ordner) und erlaubt das direkte Einreichen
-eigener Bilder über die offizielle Upload-Seite.
-
+Der Wallpaper-Manager lädt Bilder von guideos.de.
 ------------------------------------------------------------------------
 
 ## Features
@@ -15,9 +11,7 @@ eigener Bilder über die offizielle Upload-Seite.
 -   Übersichtliche Thumbnail-Ansicht mit Vorschau\
 -   Wallpaper als Cinnamon-Hintergrund setzen\
 -   Download-Funktion für Web-Wallpapers\
--   Lokale Bilder laden (Datei oder Ordner, rekursiv)\
--   Upload-Funktion für **lokale** Wallpapers\
--   Upload nur bei Erfüllung der Richtlinien (4K, Rechteinhaber)
+
 
 ------------------------------------------------------------------------
 
@@ -47,38 +41,14 @@ oder
 
 ### Web-Wallpapers
 
-Lädt automatisch alle verfügbaren Wallpapers von guideos.de.
+Lädt automatisch alle verfügbaren Wallpapers von guideos.de in eine Übersicht
 
-### Lokale Wallpapers
-
-Über „Lokale Bilder laden": - Einzelne Datei auswählen\
-- Ganzen Ordner inkl. Unterordner einlesen
-
-### Upload
-
--   Nur für lokal geladene Bilder aktiv\
--   Mindestauflösung: **3840×2160 (4K)**\
--   Nutzer muss Rechteinhaber sein\
--   Zustimmung zu den guideos.de-Richtlinien erforderlich
 
 ------------------------------------------------------------------------
 
 ## Speicherort
 
-Heruntergeladene Bilder werden gespeichert in:
-
-    ~/Bilder/GuideoWallpapers
-
-Der Ordner wird automatisch erstellt.
-
-------------------------------------------------------------------------
-
-## Hinweise
-
--   Automatischer Upload kann fehlschlagen, wenn sich das
-    Upload-Formular ändert\
--   In diesem Fall wird die Upload-Seite im Browser geöffnet\
--   Aktuell ist Cinnamon als Desktop-Umgebung vorgesehen
+Ist dem User freigestellt
 
 ------------------------------------------------------------------------
 
@@ -93,5 +63,5 @@ MIT License
 GuideOS\
 https://guideos.de
 
-Entwicklung: evilware666\
-Umsetzung & Pflege: Helga
+Entwicklung: evilware666 & Helga
+
