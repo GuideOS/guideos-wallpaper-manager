@@ -1,8 +1,3 @@
-Alles klar 😊
-Hier ist eine saubere, ausführliche und einsteigerfreundliche README.md für deinen GuideOS.de Wallpaper-Manager. Direkt so für GitHub oder zum Download geeignet.
-
----
-
 # GuideOS.de Wallpaper-Manager
 
 Ein grafischer Wallpaper-Manager für GuideOS und Cinnamon-basierte Systeme.
