@@ -1,11 +1,26 @@
-#!/usr/bin/env python3
-# -----------------------------------------------------------------------------
 # GuideOS.de Wallpaper-Manager
-# -----------------------------------------------------------------------------
-# Autor: evilware666 & Helga
-# Version: 2.1
-# Datum: 2025-12-13
-# -----------------------------------------------------------------------------
+# =============================================================================
+# Beschreibung:
+# Grafischer Wallpaper-Manager für GuideOS und Cinnamon-basierte Systeme.
+# Das Tool lädt Hintergrundbilder aus einem öffentlichen Nextcloud-Ordner,
+# erzeugt automatisch Vorschaubilder (Thumbnails), speichert diese lokal
+# zwischen und ermöglicht das Setzen oder Herunterladen von Wallpapers
+# über eine einsteigerfreundliche GTK-Oberfläche.
+#
+# Funktionen:
+# - Laden von Wallpapers aus einem öffentlichen Nextcloud-Ordner
+# - Automatische Thumbnail-Erstellung und Cache-Verwaltung
+# - Asynchrones Laden (GUI bleibt bedienbar)
+# - Vorschau in hoher Auflösung
+# - Setzen des Wallpapers unter Cinnamon
+# - Optionaler Download einzelner Bilder
+#
+# Autor(en): evilware666 & Helga
+# Projekt:   GuideOS
+# Version:   1.7
+# Datum:     13.12.2025
+# Lizenz:    Frei nutzbar im Rahmen von GuideOS
+# =============================================================================
 
 import gi
 import os
