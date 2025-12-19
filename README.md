@@ -1,67 +1,77 @@
-# GuideOS Wallpaper-Manager
+```markdown
+# GuideOS.de Wallpaper-Manager
 
-Grafisches Python-Tool zum Anzeigen, speichern und als Hintergrund setzen von Wallpaper
+## Übersicht
+Der **GuideOS.de Wallpaper-Manager** ist ein grafisches Python/GTK-Tool für GuideOS und Cinnamon-basierte Systeme.  
+Es ermöglicht die komfortable Verwaltung von Hintergrundbildern aus einem öffentlichen Nextcloud-Ordner und bietet eine benutzerfreundliche Oberfläche für Vorschau, Setzen und Download von Wallpapers.
 
-Der Wallpaper-Manager lädt Bilder von guideos.de.
-------------------------------------------------------------------------
+- **Autor(en):** evilware666 & Helga  
+- **Projekt:** GuideOS  
+- **Version:** 1.7  
+- **Letzte Änderung:** 19.12.2025  
+- **Lizenz:** Frei nutzbar im Rahmen von GuideOS  
 
-## Features
+---
 
--   Laden von Wallpapers von https://guideos.de\
--   Übersichtliche Thumbnail-Ansicht mit Vorschau\
--   Wallpaper als Cinnamon-Hintergrund setzen\
--   Download-Funktion für Web-Wallpapers\
+## Funktionen
+- Laden von Wallpapers aus einem öffentlichen Nextcloud-Ordner  
+- Automatische Thumbnail-Erstellung und Cache-Verwaltung  
+- Asynchrones Laden (GUI bleibt bedienbar)  
+- Vorschau in hoher Auflösung  
+- Setzen des Wallpapers unter Cinnamon  
+- Optionaler Download einzelner Bilder  
 
-
-------------------------------------------------------------------------
+---
 
 ## Voraussetzungen
+- **Linux-System** mit Cinnamon-Desktop  
+- **Python 3**  
+- **GTK 3** (`python3-gi`)  
+- **Pillow (PIL)** für Bildbearbeitung  
+- **Zenity** für Dialoge  
+- **gsettings** für Hintergrundbildverwaltung  
 
--   Python 3\
--   GTK 3 (PyGObject)
+---
 
-Benötigte Pakete (Ubuntu / GuideOS):
+## Installation
+1. Skript speichern, z. B. unter `/usr/local/bin/wallpaper-manager.py`.  
+2. Datei ausführbar machen:
+   ```bash
+   chmod +x /usr/local/bin/wallpaper-manager.py
+   ```
+3. Abhängigkeiten installieren:
+   ```bash
+   sudo apt install python3-gi python3-pil gir1.2-gtk-3.0 zenity
+   ```
 
-    sudo apt install python3 python3-gi gir1.2-gtk-3.0                  python3-requests python3-bs4 python3-pil
-
-------------------------------------------------------------------------
-
-## Starten
-
-    chmod +x wallpaper_manager.py
-    ./wallpaper_manager.py
-
-oder
-
-    python3 wallpaper_manager.py
-
-------------------------------------------------------------------------
+---
 
 ## Nutzung
+Starte das Skript im Terminal:
+```bash
+./wallpaper-manager.py
+```
 
-### Web-Wallpapers
+### Ablauf:
+- **Erster Start:** Thumbnails werden erstellt und lokal im Cache gespeichert.  
+- **GUI:** Übersicht aller verfügbaren Wallpapers mit Vorschau.  
+- **Aktionen:**  
+  - Hintergrund setzen  
+  - Wallpaper herunterladen  
+  - Cache-Ordner öffnen  
+  - Bilder neu laden  
 
-Lädt automatisch alle verfügbaren Wallpapers von guideos.de in eine Übersicht
+---
 
+## Hinweise
+- Thumbnails werden im Cache unter `~/.cache/guideos-wallpaper-manager-thumbs` gespeichert.  
+- Beim ersten Start kann die Erstellung der Vorschaubilder einige Minuten dauern.  
+- Das Tool lädt Bilder aus dem lokalen Ordner `~/Bilder/GuideoWallpapers`.  
+- Neue Bilder werden automatisch erkannt und verarbeitet.  
 
-------------------------------------------------------------------------
-
-## Speicherort
-
-Ist dem User freigestellt
-
-------------------------------------------------------------------------
+---
 
 ## Lizenz
-
-MIT License
-
-------------------------------------------------------------------------
-
-## Projekt
-
-GuideOS\
-https://guideos.de
-
-Entwicklung: evilware666 & Helga
-
+Dieses Projekt steht unter der **GuideOS-Lizenz (frei nutzbar im Rahmen von GuideOS)**.  
+Freie Nutzung, Modifikation und Weitergabe sind erlaubt.
+```
