@@ -8,7 +8,7 @@ Die Anwendung bietet eine übersichtliche GTK-Oberfläche mit Vorschau, Hintergr
 
 - **Autor(en):** evilware666 & Helga  
 - **Projekt:** GuideOS  
-- **Version:** 2.0  
+- **Version:** 1.8 
 - **Letzte Änderung:** 21.12.2025  
 - **Lizenz:** Frei nutzbar im Rahmen von GuideOS  
 
