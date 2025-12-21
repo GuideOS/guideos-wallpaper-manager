@@ -3,22 +3,44 @@
 # Beschreibung:
 # Grafischer Wallpaper-Manager für GuideOS und Cinnamon-basierte Systeme.
 # Das Tool lädt Hintergrundbilder aus einem öffentlichen Nextcloud-Ordner,
-# erzeugt automatisch Vorschaubilder (Thumbnails), speichert diese lokal
-# zwischen und ermöglicht das Setzen oder Herunterladen von Wallpapers
+# erzeugt automatisch Vorschaubilder (Thumbnails) im Cache-Verzeichnis,
+# speichert KEINE Vollbilder lokal (außer auf expliziten User-Wunsch)
+# und ermöglicht das Setzen oder Herunterladen von Wallpapers
 # über eine einsteigerfreundliche GTK-Oberfläche.
 #
+# Verhalten:
+# - Thumbnails werden direkt vom Nextcloud-Share erzeugt und in:
+#     ~/.cache/guideos-wallpaper-manager-thumbs
+#   gespeichert.
+# - Thumbnails verbleiben dauerhaft im Cache.
+# - Beim Start:
+#     * Nextcloud-Ordner wird nach Dateien durchsucht.
+#     * Für jede Datei:
+#         - Wenn Thumbnail bereits im Cache → wird nur aus dem Cache geladen.
+#         - Wenn Thumbnail fehlt → wird einmalig aus Nextcloud geladen.
+# - Vollbilder werden NICHT automatisch heruntergeladen.
+# - Vollbilder werden NUR geladen, wenn der User:
+#     - "Als Hintergrund setzen" oder
+#     - "Download"
+#   anklickt.
+#
 # Funktionen:
-# - Laden von Wallpapers aus einem öffentlichen Nextcloud-Ordner
-# - Automatische Thumbnail-Erstellung und Cache-Verwaltung
+# - Laden von Wallpapers aus einem öffentlichen Nextcloud-Ordner (nur Meta + Thumbs)
+# - Persistenter Thumbnail-Cache
+# - Nur neue Bilder werden nachgeladen
 # - Asynchrones Laden (GUI bleibt bedienbar)
-# - Vorschau in hoher Auflösung
-# - Setzen des Wallpapers unter Cinnamon
-# - Optionaler Download einzelner Bilder
+# - Vorschau in hoher Auflösung (vom Nextcloud-Preview, nicht Vollbild)
+# - Setzen des Wallpapers unter Cinnamon (lädt dann das Vollbild)
+# - Optionaler Download einzelner Bilder (lädt dann das Vollbild)
+#
+# Abhängigkeiten:
+# - python3-gi, gir1.2-gtk-3.0
+# - python3-requests
 #
 # Autor(en): evilware666 & Helga
 # Projekt:   GuideOS
-# Version:   1.7
-# Datum:     13.12.2025
+# Version:   1.8
+# Datum:     21.12.2025
 # Lizenz:    Frei nutzbar im Rahmen von GuideOS
 # =============================================================================
 
@@ -27,25 +49,161 @@ import os
 import threading
 import hashlib
 import subprocess
-from PIL import Image
 import webbrowser
+import requests
+from xml.etree import ElementTree as ET
+from urllib.parse import quote, unquote
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GdkPixbuf, GLib
 
-WALLPAPER_DIR = os.path.expanduser("~/Bilder/GuideoWallpapers")
+# Lokaler Ordner für Vollbilder, falls der User explizit
+# "Download" oder "Als Hintergrund setzen" nutzt.
+WALLPAPER_DIR = os.path.expanduser("~/Bilder/GuideOS-Wallpapers")
+
+# Cache-Verzeichnis für Thumbnails
 THUMB_CACHE_DIR = os.path.expanduser("~/.cache/guideos-wallpaper-manager-thumbs")
 FIRST_START_FLAG = os.path.join(THUMB_CACHE_DIR, ".first_start_done")
 
 SUPPORTED_FORMATS = (".jpg", ".jpeg", ".png", ".webp")
 
+# Nextcloud-Share-Konfiguration
+NEXTCLOUD_URL = "https://cloud.guideos.de/public.php/webdav/"
+NEXTCLOUD_TOKEN = "Z663zsACWL2XiSP"
+
 os.makedirs(WALLPAPER_DIR, exist_ok=True)
 os.makedirs(THUMB_CACHE_DIR, exist_ok=True)
 
 
-def thumb_name_from_file(file_path):
-    h = hashlib.sha256(file_path.encode("utf-8")).hexdigest()
+def thumb_name_from_file(identifier: str) -> str:
+    """
+    Erzeugt einen eindeutigen Thumbnail-Dateinamen im Cache.
+    'identifier' ist hier der DEkodierte Dateiname im Nextcloud-Share.
+    """
+    h = hashlib.sha256(identifier.encode("utf-8")).hexdigest()
     return os.path.join(THUMB_CACHE_DIR, f"{h}.png")
+
+
+def list_online_wallpapers():
+    """
+    Holt die Dateiliste aus dem öffentlichen Nextcloud-Share.
+    Gibt eine Liste von DEkodierten Dateinamen zurück, die Bildformate sind.
+    """
+    try:
+        response = requests.request(
+            "PROPFIND",
+            NEXTCLOUD_URL,
+            auth=(NEXTCLOUD_TOKEN, "")
+        )
+
+        if response.status_code not in (207, 200):
+            print("Fehler beim Abrufen der Nextcloud-Liste:", response.status_code)
+            return []
+
+        tree = ET.fromstring(response.text)
+        files = []
+
+        for elem in tree.findall(".//{DAV:}response"):
+            href = elem.find("{DAV:}href")
+            if href is None:
+                continue
+
+            file_url = href.text
+            if not file_url:
+                continue
+
+            if file_url.endswith("/"):
+                # Ordner ignorieren
+                continue
+
+            # Basename holen und DEkodieren (Umlaute, Leerzeichen, etc.)
+            filename = os.path.basename(file_url)
+            filename = unquote(filename)
+
+            if filename.lower().endswith(SUPPORTED_FORMATS):
+                files.append(filename)
+
+        return files
+
+    except Exception as e:
+        print("Fehler beim Abrufen der Dateiliste:", e)
+        return []
+
+
+def get_preview_url(filename: str, width: int, height: int) -> str:
+    """
+    Baut die URL für die Nextcloud-Preview (Thumbnail oder große Vorschau).
+
+    WICHTIG:
+    - Preview-API erwartet den Dateinamen UNENCODED.
+    - Nur 'file=/Name mit Leerzeichen.png' – kein quote() verwenden!
+    """
+    return (
+        "https://cloud.guideos.de/index.php/apps/files_sharing/publicpreview/"
+        f"{NEXTCLOUD_TOKEN}?file=/{filename}&x={width}&y={height}&a=1"
+    )
+
+
+def get_full_file_url(filename: str) -> str:
+    """
+    URL des Vollbildes über WebDAV.
+
+    HIER ist quote() korrekt, weil WebDAV encodierte Pfade akzeptiert.
+    """
+    return NEXTCLOUD_URL + quote(filename)
+
+
+def download_thumbnail(filename: str) -> str | None:
+    """
+    Lädt ein 150x150 Thumbnail direkt von Nextcloud,
+    ohne das Original herunterzuladen.
+    Speichert es im THUMB_CACHE_DIR.
+    Lädt NICHT neu, wenn bereits im Cache vorhanden.
+    """
+    thumb_path = thumb_name_from_file(filename)
+
+    # Bereits im Cache → nicht erneut laden
+    if os.path.exists(thumb_path):
+        return thumb_path
+
+    preview_url = get_preview_url(filename, 150, 150)
+
+    try:
+        r = requests.get(preview_url, stream=True, timeout=30)
+        if r.status_code == 200:
+            with open(thumb_path, "wb") as f:
+                for chunk in r.iter_content(4096):
+                    if chunk:
+                        f.write(chunk)
+            return thumb_path
+        else:
+            print(f"Fehler beim Laden des Thumbnails ({filename}):", r.status_code)
+    except Exception as e:
+        print("Fehler beim Laden des Thumbnails:", e)
+
+    return None
+
+
+def download_full_image_to_path(filename: str, target_path: str) -> bool:
+    """
+    Lädt das Vollbild von Nextcloud an einen angegebenen Pfad.
+    Wird NUR genutzt, wenn der User explizit Download oder
+    "Als Hintergrund setzen" wählt.
+    """
+    url = get_full_file_url(filename)
+    try:
+        r = requests.get(url, stream=True, auth=(NEXTCLOUD_TOKEN, ""), timeout=60)
+        if r.status_code == 200:
+            with open(target_path, "wb") as f:
+                for chunk in r.iter_content(8192):
+                    if chunk:
+                        f.write(chunk)
+            return True
+        else:
+            print(f"Fehler beim Laden des Vollbildes ({filename}):", r.status_code)
+    except Exception as e:
+        print("Fehler beim Laden des Vollbildes:", e)
+    return False
 
 
 class WallpaperManager(Gtk.Window):
@@ -54,11 +212,13 @@ class WallpaperManager(Gtk.Window):
         self.set_default_size(1200, 700)
         self.connect("destroy", Gtk.main_quit)
 
-        self.selected_file = None
+        # Statt lokalem Pfad merken wir uns den Dateinamen im Share
+        self.selected_filename = None
 
         self.build_ui()
         self.show_first_start_info()
         self.load_wallpapers_async()
+        # Alle 10 Minuten neu einlesen (z. B. neue Bilder im Share)
         GLib.timeout_add_seconds(600, self.load_wallpapers_async)
 
     def show_first_start_info(self):
@@ -75,10 +235,12 @@ class WallpaperManager(Gtk.Window):
 
         dialog.format_secondary_text(
             "⚠️ Achtung! ⚠️\n\n"
-            "Beim ersten Start werden alle Wallpaper-Vorschaubilder in einen lokalen Cache geladen.\n\n"
-            "Je nach Anzahl der verfügbaren Bilder kann dies einige Minuten dauern – bitte Geduld!\n\n"
+            "Beim ersten Start werden alle Wallpaper-Vorschaubilder "
+            "aus dem Online-Ordner in einen lokalen Cache geladen.\n\n"
+            "Es werden nur kleine Thumbnails gespeichert – keine Vollbilder.\n\n"
             f"Die Thumbnails werden gespeichert unter:\n{THUMB_CACHE_DIR}\n\n"
-            "Bei zukünftigen Starts werden nur neue Bilder geladen."
+            "Bei zukünftigen Starts werden nur neue Bilder geladen; "
+            "bereits vorhandene Thumbnails bleiben im Cache."
         )
 
         dialog.run()
@@ -87,7 +249,7 @@ class WallpaperManager(Gtk.Window):
         try:
             with open(FIRST_START_FLAG, "w") as f:
                 f.write("ok")
-        except:
+        except Exception:
             pass
 
     def build_ui(self):
@@ -145,66 +307,55 @@ class WallpaperManager(Gtk.Window):
         webbrowser.open(f"file://{THUMB_CACHE_DIR}")
 
     def load_wallpapers_async(self, *args):
-        self.flow.foreach(lambda w: self.flow.remove(w))
         self.status_label.set_text("Bilder werden in den Cache geladen …")
-        threading.Thread(target=self.load_local_wallpapers, daemon=True).start()
+        threading.Thread(target=self.load_online_wallpapers, daemon=True).start()
 
-    # -------------------------------------------------------------
-    # Lade alle vorhandenen Bilder aus WALLPAPER_DIR
-    # -------------------------------------------------------------
-    def load_local_wallpapers(self):
-        urls = []
-        for root, dirs, files in os.walk(WALLPAPER_DIR):
-            for file in files:
-                if file.lower().endswith(SUPPORTED_FORMATS):
-                    urls.append(os.path.join(root, file))
+    def load_online_wallpapers(self):
+        """
+        Lädt die Dateiliste vom Nextcloud-Share.
+        Verwendet vorhandene Thumbnails aus dem Cache
+        und lädt NUR neue Thumbnails herunter.
+        Die GUI (FlowBox) wird dabei immer aus dem Cache aufgebaut.
+        """
+        files = list_online_wallpapers()
+        total = len(files)
+        loaded = 0
 
-        total = len(urls)
-        cached = 0
+        # FlowBox leeren (GUI), Cache bleibt unverändert
+        GLib.idle_add(lambda: self.flow.foreach(lambda w: self.flow.remove(w)))
 
-        # Bereits vorhandene Thumbnails anzeigen
-        for url in urls:
-            thumb_path = thumb_name_from_file(url)
+        for filename in files:
+            thumb_path = thumb_name_from_file(filename)
+
+            # 1. Thumbnail existiert bereits im Cache → nur anzeigen
             if os.path.exists(thumb_path):
-                cached += 1
-                GLib.idle_add(self.add_thumb_to_grid, url, thumb_path)
+                loaded += 1
+                GLib.idle_add(self.add_thumb_to_grid, filename, thumb_path)
+            else:
+                # 2. Thumbnail fehlt → einmalig herunterladen
+                new_thumb = download_thumbnail(filename)
+                if new_thumb:
+                    loaded += 1
+                    GLib.idle_add(self.add_thumb_to_grid, filename, new_thumb)
 
-        GLib.idle_add(
-            lambda: self.status_label.set_text(
-                f"Cache: {cached}/{total} geladen – {total - cached} werden erstellt"
+            # Status aktualisieren
+            GLib.idle_add(
+                lambda l=loaded, t=total: self.status_label.set_text(
+                    f"Cache: {l}/{t} Thumbnails geladen"
+                )
             )
-        )
 
-        # Fehlende Thumbnails erstellen
-        created = 0
-        for url in urls:
-            thumb_path = thumb_name_from_file(url)
-            if not os.path.exists(thumb_path):
-                try:
-                    im = Image.open(url)
-                    im.thumbnail((150, 150))
-                    im.save(thumb_path, "PNG")
-                    created += 1
-
-                    GLib.idle_add(self.add_thumb_to_grid, url, thumb_path)
-                    GLib.idle_add(
-                        lambda c=cached, cr=created, t=total: self.status_label.set_text(
-                            f"Cache: {c + cr}/{t} geladen – {t - (c + cr)} verbleibend"
-                        )
-                    )
-                except:
-                    continue
-
+        # Abschlussstatus
         GLib.idle_add(
             lambda: self.status_label.set_text(
                 f"Cache aktuell – {total} Bilder verfügbar"
             )
         )
 
-    def add_thumb_to_grid(self, url, thumb_path):
+    def add_thumb_to_grid(self, filename, thumb_path):
         try:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(thumb_path)
-        except:
+        except Exception:
             return False
 
         event = Gtk.EventBox()
@@ -219,22 +370,60 @@ class WallpaperManager(Gtk.Window):
         frame.add(img_widget)
         event.add(frame)
 
-        event.connect("button-press-event", self.thumb_clicked, url)
+        # filename ist unser Identifier für dieses Bild im Share
+        event.connect("button-press-event", self.thumb_clicked, filename)
         self.flow.add(event)
         self.flow.show_all()
         return False
 
-    def thumb_clicked(self, widget, event, url):
-        self.selected_file = url
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(url, 1600, 900, True)
-        self.preview.set_from_pixbuf(pixbuf)
+    def thumb_clicked(self, widget, event, filename):
+        """
+        Beim Klick auf ein Thumbnail:
+        - Dateinamen merken
+        - Große Vorschau (nicht Vollbild) laden
+        """
+        self.selected_filename = filename
+
+        # Große Vorschau vom Nextcloud-Preview (z. B. 1600x900)
+        preview_url = get_preview_url(filename, 1600, 900)
+
+        try:
+            r = requests.get(preview_url, stream=True, timeout=60)
+            if r.status_code == 200:
+                loader = GdkPixbuf.PixbufLoader()
+                for chunk in r.iter_content(8192):
+                    if chunk:
+                        loader.write(chunk)
+                loader.close()
+                pixbuf = loader.get_pixbuf()
+                if pixbuf:
+                    self.preview.set_from_pixbuf(pixbuf)
+            else:
+                print(f"Fehler beim Laden der großen Vorschau ({filename}):", r.status_code)
+        except Exception as e:
+            print("Fehler beim Laden der großen Vorschau:", e)
+
         self.set_btn.set_sensitive(True)
         self.download_btn.set_sensitive(True)
 
     def set_wallpaper(self, button):
-        if not self.selected_file:
+        """
+        Lädt das Vollbild NUR für das ausgewählte Bild herunter
+        (falls noch nicht vorhanden) und setzt es als Hintergrund.
+        """
+        if not self.selected_filename:
             return
-        uri = "file://" + self.selected_file
+
+        local_full_path = os.path.join(WALLPAPER_DIR, self.selected_filename)
+
+        if not os.path.exists(local_full_path):
+            os.makedirs(WALLPAPER_DIR, exist_ok=True)
+            ok = download_full_image_to_path(self.selected_filename, local_full_path)
+            if not ok:
+                print("Konnte Vollbild nicht herunterladen, Abbruch.")
+                return
+
+        uri = "file://" + local_full_path
         subprocess.run(
             [
                 "gsettings", "set",
@@ -246,7 +435,11 @@ class WallpaperManager(Gtk.Window):
         )
 
     def download_wallpaper(self, button):
-        if not self.selected_file:
+        """
+        Lädt das Vollbild des ausgewählten Bildes an einen frei
+        wählbaren Pfad (User-Dialog).
+        """
+        if not self.selected_filename:
             return
 
         dialog = Gtk.FileChooserDialog(
@@ -258,15 +451,14 @@ class WallpaperManager(Gtk.Window):
             "Abbrechen", Gtk.ResponseType.CANCEL,
             "Speichern", Gtk.ResponseType.OK
         )
-        dialog.set_current_name(os.path.basename(self.selected_file))
+        dialog.set_current_name(self.selected_filename)
 
-        if dialog.run() == Gtk.ResponseType.OK:
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
             save_path = dialog.get_filename()
-            try:
-                with open(self.selected_file, "rb") as src, open(save_path, "wb") as dst:
-                    dst.write(src.read())
-            except Exception as e:
-                print("Fehler beim Speichern:", e)
+            ok = download_full_image_to_path(self.selected_filename, save_path)
+            if not ok:
+                print("Fehler beim Speichern des Vollbildes.")
 
         dialog.destroy()
 
