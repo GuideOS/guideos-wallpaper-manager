@@ -1,115 +1,153 @@
-```markdown
-# GuideOS.de Wallpaper-Manager
+# README.md  
+## GuideOS.de Wallpaper‑Manager  
+### Version 2.8 – 01.01.2026  
+**Autor(en):** evilware666 & Helga  
+**Projekt:** GuideOS  
+**Lizenz:** MIT  
 
-## Übersicht
-Der **GuideOS.de Wallpaper-Manager** ist ein grafischer Wallpaper-Browser für GuideOS und Cinnamon-basierte Systeme.  
-Er lädt ausschließlich **Thumbnails** aus einem öffentlichen Nextcloud-Ordner, speichert diese dauerhaft im lokalen Cache und lädt **Vollbilder nur auf ausdrücklichen Benutzerwunsch**.  
-Die Anwendung bietet eine moderne GTK-Oberfläche, Zoom-Funktion in der Vorschau, asynchrones Laden und einen Erststart-Hinweis mit Abbruchmöglichkeit.
+### Beschreibung  
+Grafischer Wallpaper‑Manager für **GuideOS.de**.  
+Das Tool lädt Hintergrundbilder aus dem öffentlichen GuideOS.de‑Nextcloud‑Ordner, erzeugt automatisch Vorschaubilder (Thumbnails), speichert **keine Vollbilder lokal** (außer auf ausdrücklichen Wunsch) und ermöglicht das Setzen oder Herunterladen von Wallpapers über eine einsteigerfreundliche GTK‑Oberfläche.  
+Neu in Version 2.8 ist eine **vollständige Kategorie‑Sortierung**
 
-- **Autor(en):** evilware666 & Helga  
-- **Projekt:** GuideOS  
-- **Version:** 2.2  
-- **Letzte Änderung:** 23.12.2025  
-- **Lizenz:** Frei nutzbar im Rahmen von GuideOS  
-
----
-
-## Verhalten
-- Beim Start erscheint ein Hinweis, dass das Programm eine Internetverbindung benötigt.  
-- Der Erststart-Dialog kann mit **Abbrechen** beendet werden → Programm wird geschlossen.  
-- Thumbnails werden aus dem Nextcloud-Share erzeugt und gespeichert unter:  
-  `~/.cache/guideos-wallpaper-manager-thumbs`
-- Thumbnails bleiben dauerhaft im Cache.  
-- Beim Start:
-  - Nextcloud-Ordner wird eingelesen.  
-  - Für jede Datei:
-    - Thumbnail vorhanden → aus Cache geladen  
-    - Thumbnail fehlt → einmalig aus Nextcloud geladen  
-- Vollbilder werden **nicht automatisch** heruntergeladen.  
-- Vollbilder werden **nur** geladen, wenn der Benutzer:
-  - „Als Hintergrund setzen“ oder  
-  - „Download“  
-    auswählt.  
-- Vorschau nutzt die Nextcloud-Preview-API (hochauflösend, aber kein Vollbild).  
-- Vorschau unterstützt **Zoom per STRG + Mausrad**.  
+**Wichtig:**  
+Alle Pfade werden automatisch von **@‑Zeichen bereinigt**, um maximale Kompatibilität mit Dateisystemen, WebDAV und Cinnamon zu gewährleisten.
 
 ---
 
-## Funktionen
-- Laden von Wallpapers aus einem öffentlichen Nextcloud-Ordner (nur Meta + Thumbnails)  
-- Persistenter Thumbnail-Cache  
-- Nur neue Bilder werden nachgeladen  
-- Asynchrones Laden (GUI bleibt bedienbar)  
-- Vorschau in hoher Auflösung über Nextcloud-Preview  
-- Zoom-Funktion (STRG + Mausrad)  
-- Setzen des Wallpapers unter Cinnamon (lädt dann das Vollbild)  
-- Optionaler Download einzelner Bilder (lädt dann das Vollbild)  
-- Cache-Ordner öffnen  
-- Abbruch-Button im Erststart-Dialog  
+## ✨ Hauptfunktionen
+
+### 🌐 Online‑Wallpaper‑Integration
+- Holt Bildliste direkt aus dem GuideOS.de‑Nextcloud‑WebDAV  
+- Unterstützte Formate: **JPG, JPEG, PNG, WEBP**  
+- Entfernt automatisch **alle @‑Zeichen**  
+- Keine Vollbilder im Cache – nur Thumbnails  
+- Preview‑API für schnelle Vorschau (1600×900)
+
+### 🗂️ Kategorien‑System (NEU in 2.7)
+- Automatische Erkennung von Kategorien anhand der Ordnerstruktur  
+- Beispiel: `Natur/Sonnenuntergang.jpg` → Kategorie **Natur**  
+- Kategorien werden im Dropdown angezeigt  
+- „Alle Kategorien“ und „Sonstiges“ werden automatisch verwaltet  
+- Live‑Filterung der Thumbnails nach Kategorie
+
+### 🖼️ Thumbnail‑System
+- Automatische Thumbnail‑Generierung (150×150 px)  
+- Speicherung im lokalen Cache:  
+  `~/.cache/guideos-wallpaper-manager-thumbs`  
+- SHA‑256‑basierte Dateinamen für Kollision‑freie Zuordnung  
+- Fortschrittsanzeige während des Ladens  
+- Auto‑Refresh alle 10 Minuten
+
+### 🔍 Zoombare Vorschau
+- Großansicht mit **Strg + Mausrad** zoombar  
+- Zoomfaktor 0.1× bis 10×  
+- Flüssiges Nachskalieren via GdkPixbuf  
+- **NEU:** Transparentes Dateinamen‑Overlay im Bild
+
+### 🖥️ Hintergrund setzen
+- Lädt Vollbild nur bei Bedarf herunter  
+- Setzt Wallpaper über Cinnamon‑Schema:  
+  `org.cinnamon.desktop.background picture-uri`
+
+### 💾 Download‑Funktion
+- „Speichern unter“-Dialog für Vollbilder  
+- Lädt Originaldatei aus Nextcloud
 
 ---
 
-## Abhängigkeiten
-- `python3-gi`  
-- `gir1.2-gtk-3.0`  
-- `python3-requests`  
+## 📦 Installation
 
-Installation (Debian/Ubuntu):
+### Voraussetzungen
+- Python 3  
+- GTK3 + GObject Introspection  
+- Requests  
+- Cinnamon‑Desktop (für Hintergrund‑Setzen)
+
+### Benötigte Pakete (Debian/Ubuntu)
 ```bash
-sudo apt install python3-gi gir1.2-gtk-3.0 python3-requests
+sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-gdkpixbuf-2.0 python3-requests
 ```
 
----
-
-## Installation
-1. Datei speichern, z. B. unter:
-   ```
-   /usr/local/bin/wallpaper-manager.py
-   ```
-2. Ausführbar machen:
-   ```bash
-   chmod +x /usr/local/bin/wallpaper-manager.py
-   ```
-3. Optional: Ordner für Vollbilder anlegen:
-   ```bash
-   mkdir -p ~/Bilder/GuideOS-Wallpapers
-   ```
-
----
-
-## Nutzung
-Starten:
+### Starten
 ```bash
-./wallpaper-manager.py
+python3 wallpaper_manager.py
 ```
 
-### Bedienung
-- **Erststart-Dialog:**  
-  - OK → Thumbnails werden erstellt  
-  - Abbrechen → Programm beendet sich  
-- **Thumbnail-Liste:**  
-  - Klick auf ein Thumbnail lädt große Vorschau  
-- **Vorschau:**  
-  - STRG + Mausrad → Zoom  
-  - Bild wird automatisch skaliert  
-- **Buttons:**  
-  - „Als Hintergrund setzen“ → lädt Vollbild & setzt Wallpaper  
-  - „Download“ → speichert Vollbild an frei wählbarem Ort  
-  - „Cache-Ordner öffnen“ → öffnet Thumbnail-Cache  
-  - „Bilder neu laden“ → aktualisiert Liste  
+oder ausführbar machen:
+
+```bash
+chmod +x wallpaper_manager.py
+./wallpaper_manager.py
+```
 
 ---
 
-## Hinweise
-- Das Tool speichert **keine Vollbilder automatisch**, nur Thumbnails.  
-- Vollbilder werden ausschließlich auf Benutzeraktion geladen.  
-- Der Cache wird nie gelöscht und beschleunigt zukünftige Starts.  
-- Neue Bilder im Nextcloud-Share werden automatisch erkannt.  
-- Die Vorschau ist nicht das Originalbild, sondern ein hochauflösendes Preview.  
+## 📁 Verzeichnisse
+
+| Zweck | Pfad |
+|-------|------|
+| Lokale Downloads | `~/Bilder/GuideOS-Wallpapers` |
+| Thumbnail‑Cache | `~/.cache/guideos-wallpaper-manager-thumbs` |
+| Erststart‑Flag | `~/.cache/guideos-wallpaper-manager-thumbs/.first_start_done` |
 
 ---
 
-## Lizenz
-Frei nutzbar im Rahmen von GuideOS.  
-Weitergabe und Modifikation sind erlaubt.
-```
+## 🧩 Code‑Struktur
+
+| Komponente | Beschreibung |
+|-----------|--------------|
+| `clean_path()` | Entfernt alle @‑Zeichen aus Pfaden |
+| `list_online_wallpapers()` | Holt Dateiliste aus Nextcloud |
+| `extract_categories_from_files()` | Erzeugt Kategorien aus Ordnerstruktur |
+| `update_category_dropdown()` | Aktualisiert Kategorie‑Dropdown |
+| `filter_thumbnails_by_category()` | Filtert Thumbnails nach Kategorie |
+| `download_thumbnail()` | Lädt oder cached Thumbnails |
+| `download_full_image_to_path()` | Lädt Vollbilder |
+| `ZoomableImage` | Zoombare Bildvorschau + Dateinamen‑Overlay |
+| `WallpaperManager` | Hauptfenster, UI‑Logik, Kategorien, Preview |
+| `thumb_clicked()` | Lädt große Vorschau |
+| `set_wallpaper()` | Setzt Hintergrund via gsettings |
+| `download_wallpaper()` | Speichern‑unter‑Dialog |
+
+---
+
+## ▶️ Bedienung
+
+### Kategorien
+- Dropdown oben in der Headerbar  
+- Kategorien werden automatisch erkannt  
+- Auswahl filtert die linke Thumbnail‑Ansicht  
+- „Alle Kategorien“ zeigt alles  
+- „Sonstiges“ für Dateien ohne Ordner
+
+### Thumbnails
+- Linke Seite zeigt alle passenden Bilder  
+- Klick → große Vorschau  
+- Statusleiste zeigt Dateinamen
+
+### Vorschau
+- Zoomen mit **Strg + Mausrad**  
+- Transparenter Dateiname unten links  
+- Bild wird automatisch skaliert
+
+### Aktionen
+- **Als Hintergrund setzen**  
+- **Download**  
+- **Cache‑Ordner öffnen**  
+- **Bilder neu laden**
+
+---
+
+## 🔐 Besonderheiten & Sicherheit
+
+- Speichert **niemals** Vollbilder automatisch  
+- Nur Thumbnails werden gecached  
+- Alle Pfade werden **@‑bereinigt**  
+- Netzwerkfehler werden abgefangen und protokolliert  
+- Keine externen Abhängigkeiten außer GTK & Requests
+
+---
+
+## 📄 Lizenz
+MIT‑Lizenz — freie Nutzung, Anpassung und Weitergabe erlaubt.
