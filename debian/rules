@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_install:
+	dh_auto_install
+	install -D -m 0755 guideos-wallaper-manager $(CURDIR)/debian/guideos-wallpaper-manager/usr/bin/guideos-wallpaper-manager
+	install -D -m 0644 guideos-wallaper-manager.desktop $(CURDIR)/debian/guideos-wallpaper-manager/usr/share/applications/guideos-wallpaper-manager.desktop

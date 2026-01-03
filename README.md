@@ -1,115 +1,111 @@
-```markdown
-# GuideOS.de Wallpaper-Manager
+# GuideOS Wallpaper-Manager
 
-## Übersicht
-Der **GuideOS.de Wallpaper-Manager** ist ein grafischer Wallpaper-Browser für GuideOS und Cinnamon-basierte Systeme.  
-Er lädt ausschließlich **Thumbnails** aus einem öffentlichen Nextcloud-Ordner, speichert diese dauerhaft im lokalen Cache und lädt **Vollbilder nur auf ausdrücklichen Benutzerwunsch**.  
-Die Anwendung bietet eine moderne GTK-Oberfläche, Zoom-Funktion in der Vorschau, asynchrones Laden und einen Erststart-Hinweis mit Abbruchmöglichkeit.
+Ein grafischer Wallpaper-Browser für GuideOS und Cinnamon-basierte Systeme mit intelligentem Thumbnail-Caching und Nextcloud-Integration.
 
-- **Autor(en):** evilware666 & Helga  
-- **Projekt:** GuideOS  
-- **Version:** 2.2  
-- **Letzte Änderung:** 23.12.2025  
-- **Lizenz:** Frei nutzbar im Rahmen von GuideOS  
+## Features
 
----
-
-## Verhalten
-- Beim Start erscheint ein Hinweis, dass das Programm eine Internetverbindung benötigt.  
-- Der Erststart-Dialog kann mit **Abbrechen** beendet werden → Programm wird geschlossen.  
-- Thumbnails werden aus dem Nextcloud-Share erzeugt und gespeichert unter:  
-  `~/.cache/guideos-wallpaper-manager-thumbs`
-- Thumbnails bleiben dauerhaft im Cache.  
-- Beim Start:
-  - Nextcloud-Ordner wird eingelesen.  
-  - Für jede Datei:
-    - Thumbnail vorhanden → aus Cache geladen  
-    - Thumbnail fehlt → einmalig aus Nextcloud geladen  
-- Vollbilder werden **nicht automatisch** heruntergeladen.  
-- Vollbilder werden **nur** geladen, wenn der Benutzer:
-  - „Als Hintergrund setzen“ oder  
-  - „Download“  
-    auswählt.  
-- Vorschau nutzt die Nextcloud-Preview-API (hochauflösend, aber kein Vollbild).  
-- Vorschau unterstützt **Zoom per STRG + Mausrad**.  
-
----
-
-## Funktionen
-- Laden von Wallpapers aus einem öffentlichen Nextcloud-Ordner (nur Meta + Thumbnails)  
-- Persistenter Thumbnail-Cache  
-- Nur neue Bilder werden nachgeladen  
-- Asynchrones Laden (GUI bleibt bedienbar)  
-- Vorschau in hoher Auflösung über Nextcloud-Preview  
-- Zoom-Funktion (STRG + Mausrad)  
-- Setzen des Wallpapers unter Cinnamon (lädt dann das Vollbild)  
-- Optionaler Download einzelner Bilder (lädt dann das Vollbild)  
-- Cache-Ordner öffnen  
-- Abbruch-Button im Erststart-Dialog  
-
----
-
-## Abhängigkeiten
-- `python3-gi`  
-- `gir1.2-gtk-3.0`  
-- `python3-requests`  
-
-Installation (Debian/Ubuntu):
-```bash
-sudo apt install python3-gi gir1.2-gtk-3.0 python3-requests
-```
-
----
+- 🖼️ **Intelligentes Caching** – Thumbnails werden lokal gespeichert, nur neue Bilder nachgeladen
+- ⚡ **Asynchrones Laden** – GUI bleibt während des Ladens vollständig bedienbar
+- 🔍 **Zoom-Funktion** – Vorschau mit STRG + Mausrad vergrößern/verkleinern
+- 💾 **Sparsam** – Vollbilder werden nur auf Anforderung heruntergeladen
+- 🎨 **Modernes GTK3-Design** – Native Linux-Desktop-Integration
+- 🔄 **Automatische Aktualisierung** – Neue Wallpaper werden alle 10 Minuten erkannt
 
 ## Installation
-1. Datei speichern, z. B. unter:
-   ```
-   /usr/local/bin/wallpaper-manager.py
-   ```
-2. Ausführbar machen:
-   ```bash
-   chmod +x /usr/local/bin/wallpaper-manager.py
-   ```
-3. Optional: Ordner für Vollbilder anlegen:
-   ```bash
-   mkdir -p ~/Bilder/GuideOS-Wallpapers
-   ```
 
----
+### Als Debian-Paket (empfohlen)
 
-## Nutzung
-Starten:
 ```bash
-./wallpaper-manager.py
+# Paket bauen
+dpkg-buildpackage -us -uc -b
+
+# Paket installieren
+sudo dpkg -i ../guideos-wallpaper-manager_2.2-1_all.deb
 ```
+
+### Manuell
+
+```bash
+# Abhängigkeiten installieren
+sudo apt install python3-gi gir1.2-gtk-3.0 python3-pil
+
+# Skript ausführbar machen
+chmod +x guideos-wallaper-manager
+
+# Optional: Nach /usr/local/bin kopieren
+sudo cp guideos-wallaper-manager /usr/local/bin/guideos-wallpaper-manager
+sudo cp guideos-wallaper-manager.desktop /usr/share/applications/
+```
+
+## Verwendung
+
+Programm starten:
+```bash
+guideos-wallpaper-manager
+```
+
+### Erststart
+
+Beim ersten Start erscheint ein Hinweis über die benötigte Internetverbindung:
+- **OK** → Thumbnails werden erstellt und gecacht
+- **Abbrechen** → Programm wird beendet
 
 ### Bedienung
-- **Erststart-Dialog:**  
-  - OK → Thumbnails werden erstellt  
-  - Abbrechen → Programm beendet sich  
-- **Thumbnail-Liste:**  
-  - Klick auf ein Thumbnail lädt große Vorschau  
-- **Vorschau:**  
-  - STRG + Mausrad → Zoom  
-  - Bild wird automatisch skaliert  
-- **Buttons:**  
-  - „Als Hintergrund setzen“ → lädt Vollbild & setzt Wallpaper  
-  - „Download“ → speichert Vollbild an frei wählbarem Ort  
-  - „Cache-Ordner öffnen“ → öffnet Thumbnail-Cache  
-  - „Bilder neu laden“ → aktualisiert Liste  
 
----
+- **Thumbnail auswählen** – Klick öffnet hochauflösende Vorschau
+- **Zoom** – STRG + Mausrad in der Vorschau
+- **Als Hintergrund setzen** – Lädt Vollbild und setzt es als Desktop-Wallpaper
+- **Download** – Speichert Vollbild an frei wählbarem Ort
+- **Cache-Ordner öffnen** – Öffnet `~/.cache/guideos-wallpaper-manager-thumbs`
+- **Bilder neu laden** – Aktualisiert die Wallpaper-Liste manuell
 
-## Hinweise
-- Das Tool speichert **keine Vollbilder automatisch**, nur Thumbnails.  
-- Vollbilder werden ausschließlich auf Benutzeraktion geladen.  
-- Der Cache wird nie gelöscht und beschleunigt zukünftige Starts.  
-- Neue Bilder im Nextcloud-Share werden automatisch erkannt.  
-- Die Vorschau ist nicht das Originalbild, sondern ein hochauflösendes Preview.  
+## Technische Details
 
----
+### Verzeichnisse
+
+- **Wallpaper-Quelle:** Nextcloud Public Share
+- **Thumbnail-Cache:** `~/.cache/guideos-wallpaper-manager-thumbs/`
+- **Ziel für Downloads:** `~/Bilder/GuideoWallpapers/` (erstellt bei Bedarf)
+
+### Unterstützte Formate
+
+- JPEG (`.jpg`, `.jpeg`)
+- PNG (`.png`)
+- WebP (`.webp`)
+
+### Funktionsweise
+
+1. Beim Start wird die Nextcloud-Ordnerstruktur ausgelesen
+2. Für jedes Bild wird geprüft, ob ein Thumbnail im Cache existiert
+3. Fehlende Thumbnails werden heruntergeladen und gecacht
+4. Vollbilder werden **nur** bei expliziter Benutzeraktion geladen
+5. Alle 10 Minuten erfolgt eine automatische Aktualisierung
+
+## Systemanforderungen
+
+- Python 3.6+
+- GTK 3
+- Cinnamon Desktop Environment (für Wallpaper-Funktion)
+- Internetverbindung
+
+## Abhängigkeiten
+
+Das Debian-Paket installiert automatisch:
+- `python3`
+- `python3-gi`
+- `python3-pil`
+- `gir1.2-gtk-3.0`
+
+## Entwicklung
+
+**Autor:** evilware666 & Helga  
+**Maintainer:** Actionschnitzel <actionschnitzel@guideos.de>  
+**Version:** 2.2  
+**Lizenz:** GPL-3+  
+**Projekt:** [GuideOS](https://guideos.de)
 
 ## Lizenz
-Frei nutzbar im Rahmen von GuideOS.  
-Weitergabe und Modifikation sind erlaubt.
-```
+
+Dieses Programm ist freie Software. Sie können es unter den Bedingungen der GNU General Public License Version 3 (oder jeder späteren Version) weitergeben und/oder modifizieren.
+
+Siehe [LICENSE](LICENSE) für Details.
